@@ -1,12 +1,19 @@
 import React from 'react';
 import Navbar from './navbar/Navbar';
-import { BrowserRouter as Router} from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Login from './registrations/Login';
+import Register from './registrations/Register';
+import './App.css';
 
 const App = () => {
   return (
-    <Router>
+    <BrowserRouter>
       <Navbar />
-    </Router>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+      </Routes>      
+    </BrowserRouter>
   );
 }
 

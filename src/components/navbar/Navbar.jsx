@@ -1,14 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/images/logo.svg';
+import Login from './LoginButton';
 
 function Navbar() {
   return (
-    <nav className="bg-gray-900 text-white p-4">
-      <div className="container mx-auto flex justify-between items-center">
+    <nav className="bg-gray-800 text-white p-4 absolute w-screen">
+      <div className="container mx-auto flex justify-between items-center w-screen">
         <div className="text-xl font-bold">
           <Link to="/" className="text-white">
-            <img src={logo} alt="Logo" className="inline-block w-8 mr-2 w-32" />
+            <img src={logo} alt="Logo" className="inline-block mr-2 w-32" />
           </Link>
         </div>
         <div className="space-x-4">
@@ -25,9 +26,9 @@ function Navbar() {
             Settlement
           </Link>
         </div>
-        <div className="flex items-center space-x-2">
-          {/* Add user profile information and logout button */}
-        </div>
+
+        <Login />
+
       </div>
     </nav>
   );
