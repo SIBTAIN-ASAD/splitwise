@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import logo from '../../assets/images/logo.svg';
 
 function Navbar() {
   return (
@@ -7,7 +8,7 @@ function Navbar() {
       <div className="container mx-auto flex justify-between items-center">
         <div className="text-xl font-bold">
           <Link to="/" className="text-white">
-            Splitwise
+            <img src={logo} alt="Logo" className="inline-block w-8 mr-2 w-32" />
           </Link>
         </div>
         <div className="space-x-4">
