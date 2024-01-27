@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import logo from '../../assets/images/logo.svg';
-import Login from './LoginButton';
+import LoginButton from '../buttons/LoginButton';
 
 function Navbar() {
   return (
@@ -27,7 +27,7 @@ function Navbar() {
           </Link>
         </div>
 
-        <Login />
+        <LoginButton />
 
       </div>
     </nav>
