@@ -5,14 +5,14 @@ import LoginButton from '../buttons/LoginButton';
 
 function Navbar() {
   return (
-    <nav className="bg-gray-800 text-white p-4 absolute w-screen">
-      <div className="container mx-auto flex justify-between items-center w-screen">
+    <nav className="bg-gray-800 text-white p-4 px-12">
+      <div className="container mx-auto flex justify-between items-center">
         <div className="text-xl font-bold">
           <Link to="/" className="text-white">
             <img src={logo} alt="Logo" className="inline-block mr-2 w-32" />
           </Link>
         </div>
-        <div className="space-x-4">
+        <div className="hidden md:flex space-x-4"> {/* Hide on small screens */}
           <Link to="/dashboard" className="hover:text-gray-300">
             Dashboard
           </Link>
