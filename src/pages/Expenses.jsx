@@ -100,9 +100,9 @@ const Expenses = () => {
                   onClick={() => handleViewExpense(expense)}
                   className='bg-blue-800 text-white px-3 py-1 rounded-md'
                 >
-                  View
+                  View Report
                 </button>
-                <button className='bg-red-500 text-white px-3 py-1 rounded-md'>Delete</button>
+                <button className='bg-red-500 text-white px-3 py-1 rounded-md'>Settle</button>
               </div>
             </div>
           ))}

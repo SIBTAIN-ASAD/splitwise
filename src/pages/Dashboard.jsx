@@ -65,7 +65,7 @@ const Dashboard = () => {
       <div className='w-full md:w-3/4 flex flex-col md:flex-row gap-10'>
 
         {currentUser && (
-          <div className="pt-32">
+          <div className="pt-2">
             <h1 className='text-[#1F2937] text-xl'>Welcome <span className='text-3xl'>{currentUser.displayName}</span></h1>
             <div className='flex flex-col'>
               <hr className='border border-[#1F2937] my-1 w-32' />

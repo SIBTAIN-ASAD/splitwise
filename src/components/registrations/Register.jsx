@@ -1,33 +1,67 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../AuthContext';
 import App from '../../config/firebase';
 
 const Register = () => {
     const auth = getAuth(App);
+    const storage = getStorage(App);
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [image, setImage] = useState(null);
+    const [imageUrl, setImageUrl] = useState('');
+    const [displayName, setDisplayName] = useState(''); // Added display name state
     const navigate = useNavigate();
     const { currentUser } = useAuth();
 
     useEffect(() => {
-        // Redirect to home page if the user is already logged in
         if (currentUser) {
             navigate('/');
         }
     }, [currentUser, navigate]);
 
-    const register = async (email, password) => {
+    const register = async () => {
         try {
-            await createUserWithEmailAndPassword(auth, email, password);
-            alert('User registered successfully');
-            navigate('/'); // Redirect to home page after registration
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // Update user profile with display name
+            await updateProfile(user, { displayName });
+
+            if (image) {
+                uploadImage(user.uid);
+            } else {
+                alert('User registered successfully');
+                navigate('/');
+            }
         } catch (error) {
             console.error('Error creating user:', error.message);
         }
+    }
+
+    const uploadImage = (userId) => {
+        const storageRef = ref(storage, `profile_images/${userId}/${image.name}`);
+        uploadBytes(storageRef, image)
+            .then((snapshot) => {
+                console.log('Image uploaded successfully');
+                getDownloadURL(snapshot.ref)
+                    .then((url) => {
+                        setImageUrl(url);
+                        // Optionally, you can store the image URL in the Firebase database
+                        alert('User registered successfully');
+                        navigate('/');
+                    })
+                    .catch((error) => {
+                        console.error('Error getting download URL:', error);
+                    });
+            })
+            .catch((error) => {
+                console.error('Error uploading image:', error);
+            });
     }
 
     const handleRegister = () => {
@@ -35,25 +69,29 @@ const Register = () => {
             alert("Passwords don't match");
             return;
         }
-        // Password must be 6 characters long
         if (password.length < 6) {
             alert('Password must be at least 6 characters long');
             return;
         }
-        // Email Validation
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
         if (!emailRegex.test(email)) {
             alert('Please enter a valid email');
             return;
         }
-        // Username Validation
         const usernameRegex = /^[a-zA-Z0-9]+$/;
         if (!usernameRegex.test(username)) {
             alert('Username can only contain alphanumeric characters');
             return;
         }
-        // If everything is ok, register the user
-        register(email, password);
+        if (!displayName) {
+            alert('Please enter a display name');
+            return;
+        }
+        register();
+    }
+
+    const handleImageChange = (e) => {
+        setImage(e.target.files[0]);
     }
 
     return (
@@ -69,6 +107,16 @@ const Register = () => {
                             placeholder="Username"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <input
+                            type="text" // Changed type to text for display name input
+                            id="displayName"
+                            className="w-full p-2 rounded bg-gray-700 text-white border focus:outline-none focus:border-purple-500"
+                            placeholder="Display Name" // Placeholder for display name
+                            value={displayName}
+                            onChange={(e) => setDisplayName(e.target.value)}
                         />
                     </div>
                     <div className="mb-4">
@@ -99,6 +147,15 @@ const Register = () => {
                             placeholder="Confirm Password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
+                        />
+                    </div>
+                    <div className="mb-4">
+                        <input
+                            type="file"
+                            id="image"
+                            accept="image/*"
+                            className="w-full p-2 rounded bg-gray-700 text-white border focus:outline-none focus:border-purple-500"
+                            onChange={handleImageChange}
                         />
                     </div>
                     <button
