@@ -35,7 +35,6 @@ export const AuthProvider = ({ children }) => {
   const signOutUser = async () => { // Sign out the user
     try {
       await signOut(auth);
-      alert('User logged out successfully');
     } catch (error) {
       console.error('Error signing out:', error.message);
     }

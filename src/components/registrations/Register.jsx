@@ -3,18 +3,23 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getAuth, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../AuthContext';
+import { collection, addDoc } from 'firebase/firestore';
 import App from '../../config/firebase';
+import db from '../../config/firebasedb';
 
 const Register = () => {
     const auth = getAuth(App);
     const storage = getStorage(App);
-    const [username, setUsername] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [image, setImage] = useState(null);
-    const [imageUrl, setImageUrl] = useState('');
-    const [displayName, setDisplayName] = useState(''); // Added display name state
+    let imageURL = '';
+    const [formData, setFormData] = useState({
+        username: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        image: null,
+        displayName: '',
+    });
+
     const navigate = useNavigate();
     const { currentUser } = useAuth();
 
@@ -24,75 +29,101 @@ const Register = () => {
         }
     }, [currentUser, navigate]);
 
+
     const register = async () => {
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
             const user = userCredential.user;
-
-            // Update user profile with display name
-            await updateProfile(user, { displayName });
-
-            if (image) {
-                uploadImage(user.uid);
-            } else {
-                alert('User registered successfully');
-                navigate('/');
+    
+            if (!user) {
+                throw new Error('User object is null');
             }
+    
+            // Update user profile with display name
+            await updateProfile(user, { displayName: formData.displayName });
+    
+            // Upload image if provided
+            await storeUserDetails(user); // Await the storeUserDetails function call
         } catch (error) {
             console.error('Error creating user:', error.message);
         }
     }
-
-    const uploadImage = (userId) => {
-        const storageRef = ref(storage, `profile_images/${userId}/${image.name}`);
-        uploadBytes(storageRef, image)
-            .then((snapshot) => {
-                console.log('Image uploaded successfully');
-                getDownloadURL(snapshot.ref)
-                    .then((url) => {
-                        setImageUrl(url);
-                        // Optionally, you can store the image URL in the Firebase database
-                        alert('User registered successfully');
-                        navigate('/');
-                    })
-                    .catch((error) => {
-                        console.error('Error getting download URL:', error);
-                    });
-            })
-            .catch((error) => {
-                console.error('Error uploading image:', error);
+    
+    
+    const storeUserDetails = async (user) => {
+        try {
+            if (formData.image) {
+                await uploadImage(user.uid); // Await the uploadImage function call
+            } 
+            // Add user details to the user_detail collection
+            await addDoc(collection(db, 'user_detail'), {
+                displayName: formData.displayName,
+                picture: imageURL,
+                email: user.email,
+                userID: user.uid,
             });
+            navigate('/');
+        } catch (error) {
+            console.error('Error storing user details:', error.message);
+        }
     }
 
+    const uploadImage = async (userId) => {
+        try {
+            const storageRef = ref(storage, `profile_images/${userId}/${formData.image.name}`);
+            await uploadBytes(storageRef, formData.image);
+            const url = await getDownloadURL(storageRef);
+            console.log('Image uploaded successfully at URL:', url);
+            imageURL = url;
+            console.log('Image URL:', imageURL);
+
+        } catch (error) {
+            console.error('Error uploading image:', error.message);
+        }
+    }
+    
+    
     const handleRegister = () => {
-        if (password !== confirmPassword) {
+        if (formData.password !== formData.confirmPassword) {
             alert("Passwords don't match");
             return;
         }
-        if (password.length < 6) {
+        if (formData.password.length < 6) {
             alert('Password must be at least 6 characters long');
             return;
         }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
-        if (!emailRegex.test(email)) {
+        if (!emailRegex.test(formData.email)) {
             alert('Please enter a valid email');
             return;
         }
         const usernameRegex = /^[a-zA-Z0-9]+$/;
-        if (!usernameRegex.test(username)) {
+        if (!usernameRegex.test(formData.username)) {
             alert('Username can only contain alphanumeric characters');
             return;
         }
-        if (!displayName) {
+        if (!formData.displayName) {
             alert('Please enter a display name');
             return;
         }
-        register();
+        if (formData.image && formData.image.size > 1024 * 1024) {
+            alert('Image size must be less than 1MB');
+            return;
+        }
+
+        (async () => {
+            await register();
+        })();
     }
 
     const handleImageChange = (e) => {
-        setImage(e.target.files[0]);
+        setFormData(prevState => ({
+            ...prevState,
+            image: e.target.files[0]
+        }));
     }
+
+
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
@@ -105,18 +136,24 @@ const Register = () => {
                             id="username"
                             className="w-full p-2 rounded bg-gray-700 text-white border focus:outline-none focus:border-purple-500"
                             placeholder="Username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            value={formData.username}
+                            onChange={(e) => setFormData(prevState => ({
+                                ...prevState,
+                                username: e.target.value
+                            }))}
                         />
                     </div>
                     <div className="mb-4">
                         <input
-                            type="text" // Changed type to text for display name input
+                            type="text" 
                             id="displayName"
                             className="w-full p-2 rounded bg-gray-700 text-white border focus:outline-none focus:border-purple-500"
-                            placeholder="Display Name" // Placeholder for display name
-                            value={displayName}
-                            onChange={(e) => setDisplayName(e.target.value)}
+                            placeholder="Display Name" 
+                            value={formData.displayName}
+                            onChange={(e) => setFormData(prevState => ({
+                                ...prevState,
+                                displayName: e.target.value
+                            }))}
                         />
                     </div>
                     <div className="mb-4">
@@ -125,8 +162,11 @@ const Register = () => {
                             id="email"
                             className="w-full p-2 rounded bg-gray-700 text-white border focus:outline-none focus:border-purple-500"
                             placeholder="Email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            value={formData.email}
+                            onChange={(e) => setFormData(prevState => ({
+                                ...prevState,
+                                email: e.target.value
+                            }))}
                         />
                     </div>
                     <div className="mb-4">
@@ -135,8 +175,11 @@ const Register = () => {
                             id="password"
                             className="w-full p-2 rounded bg-gray-700 text-white border focus:outline-none focus:border-purple-500"
                             placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            value={formData.password}
+                            onChange={(e) => setFormData(prevState => ({
+                                ...prevState,
+                                password: e.target.value
+                            }))}
                         />
                     </div>
                     <div className="mb-4">
@@ -145,8 +188,11 @@ const Register = () => {
                             id="confirmPassword"
                             className="w-full p-2 rounded bg-gray-700 text-white border focus:outline-none focus:border-purple-500"
                             placeholder="Confirm Password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            value={formData.confirmPassword}
+                            onChange={(e) => setFormData(prevState => ({
+                                ...prevState,
+                                confirmPassword: e.target.value
+                            }))}
                         />
                     </div>
                     <div className="mb-4">
