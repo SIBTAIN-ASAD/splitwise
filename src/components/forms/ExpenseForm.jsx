@@ -1,27 +1,60 @@
 import React, { useState } from 'react';
 import { addDoc, collection } from 'firebase/firestore';
+import { ref, uploadBytes, getStorage, getDownloadURL } from 'firebase/storage';
 import db from '../../config/firebasedb';
+import { useAuth } from '../AuthContext';
+import App from '../../config/firebase';
 
 const ExpenseForm = ({ usersData, onClose }) => {
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [expenseDetails, setExpenseDetails] = useState({
         description: '',
-        photo: '',
+        photo: null,
         date: '',
         totalExpense: '',
-        poster: '',
+        status: '',
         userExpenses: {},
         collaborators: [],
     });
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const { currentUser } = useAuth();
+    const storage = getStorage(App);
+    let imageURL = '';
 
     const handleExpenseChange = (e) => {
-        const { name, value } = e.target;
-        setExpenseDetails(prevState => ({
-            ...prevState,
-            [name]: value,
-        }));
+        const { name, value, files } = e.target;
+    
+        if (name === 'photo' && files.length > 0) {
+            const photoFile = files[0];
+            const reader = new FileReader();
+    
+            reader.onload = async () => {
+                try {
+                    // Upload photo to Firebase Storage
+                    const storageRef = ref(storage, `expenses/${photoFile.name}`);
+                    await uploadBytes(storageRef, photoFile);
+    
+                    // Get download URL
+                    const photoURL = await getDownloadURL(storageRef);
+    
+                    // Update expenseDetails state with photo URL
+                    imageURL = photoURL;
+
+                } catch (error) {
+                    console.error('Error uploading photo:', error.message);
+                }
+            };
+    
+            reader.readAsDataURL(photoFile); // Read file contents
+        } else {
+            // For non-file inputs, update state as usual
+            setExpenseDetails(prevState => ({
+                ...prevState,
+                [name]: value,
+            }));
+        }
     };
+    
 
     const handleUserExpenseChange = (e, userId) => {
         const { value } = e.target;
@@ -55,16 +88,28 @@ const ExpenseForm = ({ usersData, onClose }) => {
         setSelectedUsers([...selectedUsers, userId]);
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleSubmit = async () => {
+        try {
+        // Upload photo to the storage
+        const storgeRef = ref(storage, `expenses/${expenseDetails.photo.name}`);
+        await uploadBytes(storgeRef, expenseDetails.photo);
+        const photoURL = getDownloadURL(storgeRef);
+        setExpenseDetails(prevState => ({
+            ...prevState,
+            photo: photoURL,
+        }));
+        } catch (error) {
+            console.error('Error uploading photo:', error.message);
+        }
         try {
             // Add expense details to the 'expense' collection
             const expenseRef = await addDoc(collection(db, 'expense'), {
                 description: expenseDetails.description,
-                photo: expenseDetails.photo,
+                photo: imageURL,
                 date: expenseDetails.date,
                 totalExpense: expenseDetails.totalExpense,
-                poster: expenseDetails.poster,
+                status: expenseDetails.status,
+                addedBy : currentUser.displayName,
             });
 
             // Add user expenses to the 'expense_detail' collection
@@ -82,7 +127,7 @@ const ExpenseForm = ({ usersData, onClose }) => {
                 photo: '',
                 date: '',
                 totalExpense: '',
-                poster: '',
+                status: '',
                 userExpenses: {},
                 collaborators: [],
             });
@@ -101,7 +146,7 @@ const ExpenseForm = ({ usersData, onClose }) => {
             photo: '',
             date: '',
             totalExpense: '',
-            poster: '',
+            status: '',
             userExpenses: {},
             collaborators: [],
         });
@@ -113,7 +158,7 @@ const ExpenseForm = ({ usersData, onClose }) => {
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
             <div className="bg-white p-6 rounded-md w-full max-w-md">
-                <form onSubmit={handleSubmit}>
+                <form>
                     <div className="mb-4">
                         <label htmlFor="totalExpense" className="block text-gray-700">Total Expense:</label>
                         <input
@@ -214,7 +259,8 @@ const ExpenseForm = ({ usersData, onClose }) => {
                     >
                         Cancel</button>
 
-                    <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600 mt-4 float-end">
+                    <button onClick={handleSubmit} type="button"
+                     className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600 mt-4 float-end">
                         Submit</button>
 
                 </form>

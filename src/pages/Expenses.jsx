@@ -1,8 +1,40 @@
 import React, { useState } from 'react';
+import { useAuth } from '../components/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import ExpenseDetails from './ExpenseDetails';
+import { collection, getDocs } from 'firebase/firestore';
+import db from '../config/firebasedb';
+  
+
 
 const Expenses = () => {
   const [selectedExpense, setSelectedExpense] = useState(null);
+  const [expenses, setExpenses] = useState([]);
+
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
+
+  const fetchExpenses = async () => {
+    try {
+      const expensesCollection = collection(db, 'expense'); // Assuming the collection name is 'expenses'
+      const expensesSnapshot = await getDocs(expensesCollection);
+      const expensesData = expensesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setExpenses(expensesData);
+    } catch (error) {
+      console.error('Error fetching expenses:', error);
+    }
+  };
+
+
+  // Redirect to login if there is no current user
+  if (!currentUser) {
+    navigate('/login');
+  } else {
+    fetchExpenses();
+  }
+
+  console.log(expenses);
+
 
   const handleViewExpense = (expense) => {
     setSelectedExpense(expense);
@@ -11,68 +43,6 @@ const Expenses = () => {
   const handleClosePopup = () => {
     setSelectedExpense(null);
   };
-  const expenses = [
-    {
-      id: 1,
-      total: 1000,
-      addedBy: 'John Doe',
-      date: new Date(2021, 7, 14)
-    },
-    {
-      id: 2,
-      total: 1000,
-      addedBy: 'John Doe',
-      date: new Date(2021, 7, 14)
-    },
-    {
-      id: 3,
-      total: 1000,
-      addedBy: 'John Doe',
-      date: new Date(2021, 7, 14)
-    },
-    {
-      id: 4,
-      total: 1000,
-      addedBy: 'John Doe',
-      date: new Date(2021, 7, 14)
-    },
-    {
-      id: 5,
-      total: 1000,
-      addedBy: 'John Doe',
-      date: new Date(2021, 7, 14)
-    },
-    {
-      id: 6,
-      total: 1000,
-      addedBy: 'John Doe',
-      date: new Date(2021, 7, 14)
-    },
-    {
-      id: 7,
-      total: 1000,
-      addedBy: 'John Doe',
-      date: new Date(2021, 7, 14)
-    },
-    {
-      id: 8,
-      total: 1000,
-      addedBy: 'John Doe',
-      date: new Date(2021, 7, 14)
-    },
-    {
-      id: 9,
-      total: 1000,
-      addedBy: 'John Doe',
-      date: new Date(2021, 7, 14)
-    },
-    {
-      id: 10,
-      total: 1000,
-      addedBy: 'John Doe',
-      date: new Date(2021, 7, 14)
-    }
-  ];
 
   return (
     <section className='flex justify-center items-center py-16 px-10 md:px-1 relative'>
@@ -84,17 +54,21 @@ const Expenses = () => {
             <hr className='border border-blue-800 mb-5 w-28' />
           </div>
           <p className='text-gray-600'>
-            Our mission is a relentless pursuit of compassion and empowerment. We stand committed to aiding the vulnerable, the marginalized, and the oppressed. We are dedicated to providing the resources and support necessary to help them thrive.
+          Here, you'll find a comprehensive overview of all expenses, empowering you to make informed decisions and foster financial transparency.
           </p>
         </div>
         <div className='flex flex-col gap-2'>
           {expenses.map((expense) => (
-            <div key={expense.id} className='flex flex-row justify-between bg-blue-800 bg-opacity-20 p-4'>
-              <div className='flex flex-row gap-12'>
-                <h1 className='text-primary text-lg'>{expense.total}</h1>
-                <p className='text-gray-600'>{expense.addedBy}</p>
-                <p className='text-gray-600'>{expense.date.toDateString()}</p>
-              </div>
+            <div key={expense.id} className='flex flex-row justify-between bg-blue-800 bg-opacity-20 p-4 rounded-sm'>
+              <div className='flex flex-row gap-12 items-center'>
+                <div className="flex-shrink-0">
+                  <img src={expense.photo} alt="Expense" className="h-10 w-10 rounded-full" />
+                </div>
+                  <p className='text-primary text-green-800 text-lg'>{expense.totalExpense}</p>
+                  <p className='text-lg '>{expense.description}</p>
+                  <p className='text-gray-600'>{expense.date}</p>
+                </div>
+  
               <div className='flex flex-row gap-6'>
                 <button
                   onClick={() => handleViewExpense(expense)}
