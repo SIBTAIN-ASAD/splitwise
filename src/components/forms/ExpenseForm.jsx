@@ -10,7 +10,7 @@ const ExpenseForm = ({ usersData, onClose }) => {
     const [expenseDetails, setExpenseDetails] = useState({
         description: '',
         photo: null,
-        date: '',
+        date: new Date().toISOString().split('T')[0], // Set initial date to today's date
         totalExpense: '',
         status: '',
         userExpenses: {},
@@ -54,7 +54,6 @@ const ExpenseForm = ({ usersData, onClose }) => {
             }));
         }
     };
-    
 
     const handleUserExpenseChange = (e, userId) => {
         const { value } = e.target;
@@ -77,6 +76,7 @@ const ExpenseForm = ({ usersData, onClose }) => {
                 }],
             }));
             setSelectedUsers(selectedUsers.filter(user => user !== userId));
+            setDropdownOpen(false); // Close the dropdown
         }
     };
 
@@ -90,14 +90,14 @@ const ExpenseForm = ({ usersData, onClose }) => {
 
     const handleSubmit = async () => {
         try {
-        // Upload photo to the storage
-        const storgeRef = ref(storage, `expenses/${expenseDetails.photo.name}`);
-        await uploadBytes(storgeRef, expenseDetails.photo);
-        const photoURL = getDownloadURL(storgeRef);
-        setExpenseDetails(prevState => ({
-            ...prevState,
-            photo: photoURL,
-        }));
+            // Upload photo to the storage
+            const storageRef = ref(storage, `expenses/${expenseDetails.photo.name}`);
+            await uploadBytes(storageRef, expenseDetails.photo);
+            const photoURL = getDownloadURL(storageRef);
+            setExpenseDetails(prevState => ({
+                ...prevState,
+                photo: photoURL,
+            }));
         } catch (error) {
             console.error('Error uploading photo:', error.message);
         }
@@ -125,7 +125,7 @@ const ExpenseForm = ({ usersData, onClose }) => {
             setExpenseDetails({
                 description: '',
                 photo: '',
-                date: '',
+                date: new Date().toISOString().split('T')[0], // Reset date to today's date
                 totalExpense: '',
                 status: '',
                 userExpenses: {},
@@ -144,7 +144,7 @@ const ExpenseForm = ({ usersData, onClose }) => {
         setExpenseDetails({
             description: '',
             photo: '',
-            date: '',
+            date: new Date().toISOString().split('T')[0], // Reset date to today's date
             totalExpense: '',
             status: '',
             userExpenses: {},
@@ -193,6 +193,22 @@ const ExpenseForm = ({ usersData, onClose }) => {
                             </div>
                             {dropdownOpen && (
                                 <ul className="absolute top-full left-0 right-0 z-10 bg-white border border-gray-300 rounded-b-md mt-1">
+                                    <li className="flex items-center justify-between px-3 py-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                // Add all users with some value as collaborators
+                                                usersData.forEach(user => {
+                                                    if (expenseDetails.userExpenses[user.id] !== '') {
+                                                        handleAddCollaborator(user.id);
+                                                    }
+                                                });
+                                            }}
+                                            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600 float-end"
+                                        >
+                                            Add
+                                        </button>
+                                    </li>
                                     {usersData.map(user => (
                                         <li key={user.id} className="flex items-center justify-between px-3 py-2">
                                             <span className='w-20'>{user.displayName}</span>
@@ -202,13 +218,6 @@ const ExpenseForm = ({ usersData, onClose }) => {
                                                 onChange={(e) => handleUserExpenseChange(e, user.id)}
                                                 className="w-20 px-2 py-1 border rounded-md focus:outline-none focus:border-blue-500"
                                             />
-                                            <button
-                                                type="button"
-                                                onClick={() => handleAddCollaborator(user.id)}
-                                                className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600"
-                                            >
-                                                Add
-                                            </button>
                                         </li>
                                     ))}
                                 </ul>
@@ -271,6 +280,3 @@ const ExpenseForm = ({ usersData, onClose }) => {
 
 
 export default ExpenseForm;
-
-
-

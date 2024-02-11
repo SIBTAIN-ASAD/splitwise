@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '../components/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ExpenseDetails from './ExpenseDetails';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, query, where, getDocs as getDocsDetail } from 'firebase/firestore';
 import db from '../config/firebasedb';
-  
-
 
 const Expenses = () => {
   const [selectedExpense, setSelectedExpense] = useState(null);
@@ -16,7 +14,7 @@ const Expenses = () => {
 
   const fetchExpenses = async () => {
     try {
-      const expensesCollection = collection(db, 'expense'); // Assuming the collection name is 'expenses'
+      const expensesCollection = collection(db, 'expense');
       const expensesSnapshot = await getDocs(expensesCollection);
       const expensesData = expensesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setExpenses(expensesData);
@@ -25,16 +23,30 @@ const Expenses = () => {
     }
   };
 
+  const settleExpense = async (expenseId) => {
+    try {
+      // Remove the expense entry from the frontend
+      setExpenses(prevExpenses => prevExpenses.filter(expense => expense.id !== expenseId));
 
-  // Redirect to login if there is no current user
+      // Remove the expense entry from the 'expense' collection in Firebase
+      await deleteDoc(doc(db, 'expense', expenseId));
+
+      // Remove all entries related to this expense from the 'expense_detail' collection in Firebase
+      const expenseDetailQuery = query(collection(db, 'expense_detail'), where('expense_id', '==', expenseId));
+      const expenseDetailSnapshot = await getDocsDetail(expenseDetailQuery);
+      expenseDetailSnapshot.docs.forEach(async doc => {
+        await deleteDoc(doc.ref);
+      });
+    } catch (error) {
+      console.error('Error settling expense:', error);
+    }
+  };
+
   if (!currentUser) {
     navigate('/login');
   } else {
     fetchExpenses();
   }
-
-  console.log(expenses);
-
 
   const handleViewExpense = (expense) => {
     setSelectedExpense(expense);
@@ -76,7 +88,12 @@ const Expenses = () => {
                 >
                   View Report
                 </button>
-                <button className='bg-red-500 text-white px-3 py-1 rounded-md'>Settle</button>
+                <button
+                  onClick={() => settleExpense(expense.id)}
+                  className='bg-red-500 text-white px-3 py-1 rounded-md'
+                >
+                  Settle
+                </button>
               </div>
             </div>
           ))}
