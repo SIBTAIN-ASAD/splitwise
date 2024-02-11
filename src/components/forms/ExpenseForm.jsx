@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import { addDoc, collection } from 'firebase/firestore';
+import db from '../../config/firebasedb';
 
-const ExpenseForm = ({ usersData , onClose }) => {
-
+const ExpenseForm = ({ usersData, onClose }) => {
     const [selectedUsers, setSelectedUsers] = useState([]);
     const [expenseDetails, setExpenseDetails] = useState({
         description: '',
@@ -54,21 +55,47 @@ const ExpenseForm = ({ usersData , onClose }) => {
         setSelectedUsers([...selectedUsers, userId]);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Expense Details:', expenseDetails);
-        setExpenseDetails({
-            description: '',
-            photo: '',
-            date: '',
-            totalExpense: '',
-            poster: '',
-            userExpenses: {},
-            collaborators: [],
-        });
+        try {
+            // Add expense details to the 'expense' collection
+            const expenseRef = await addDoc(collection(db, 'expense'), {
+                description: expenseDetails.description,
+                photo: expenseDetails.photo,
+                date: expenseDetails.date,
+                totalExpense: expenseDetails.totalExpense,
+                poster: expenseDetails.poster,
+            });
+
+            // Add user expenses to the 'expense_detail' collection
+            expenseDetails.collaborators.forEach(async collaborator => {
+                await addDoc(collection(db, 'expense_detail'), {
+                    user_id: collaborator.id,
+                    expense_id: expenseRef.id,
+                    user_expense: collaborator.expense,
+                });
+            });
+
+            // Reset form state
+            setExpenseDetails({
+                description: '',
+                photo: '',
+                date: '',
+                totalExpense: '',
+                poster: '',
+                userExpenses: {},
+                collaborators: [],
+            });
+
+            // Close the expense form
+            onClose();
+        } catch (error) {
+            console.error('Error adding expense:', error.message);
+        }
     };
 
     const handleCancel = () => {
+        // Reset form state
         setExpenseDetails({
             description: '',
             photo: '',
@@ -79,14 +106,14 @@ const ExpenseForm = ({ usersData , onClose }) => {
             collaborators: [],
         });
 
-        onClose(false);
+        // Close the expense form
+        onClose();
     }
 
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
             <div className="bg-white p-6 rounded-md w-full max-w-md">
                 <form onSubmit={handleSubmit}>
-
                     <div className="mb-4">
                         <label htmlFor="totalExpense" className="block text-gray-700">Total Expense:</label>
                         <input
@@ -181,8 +208,9 @@ const ExpenseForm = ({ usersData , onClose }) => {
                         />
                     </div>
 
+
                     <button className="bg-red-500 text-white px-4 mx-2 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:bg-red-600 mt-4 float-end"
-                    onClick={handleCancel}
+                        onClick={handleCancel}
                     >
                         Cancel</button>
 
@@ -195,4 +223,8 @@ const ExpenseForm = ({ usersData , onClose }) => {
     );
 };
 
+
 export default ExpenseForm;
+
+
+

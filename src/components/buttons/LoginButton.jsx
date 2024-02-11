@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../AuthContext';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, getDocs } from 'firebase/firestore';
 import db  from '../../config/firebasedb';
 import { useNavigate } from 'react-router-dom';
 import GoogleButton from './GoogleButton';
@@ -21,7 +21,21 @@ const LoginButton = () => {
       }
       
       try {
-          await addDoc(collection(db, 'user_detail'), {
+          const docRef = collection(db, 'user_detail');
+          let found = false;
+          // check if email already exists
+          const querySnapshot = await getDocs(docRef);
+          querySnapshot.forEach((doc) => {
+              if (doc.data().email === email) {
+                  found = true;
+              }
+          });
+
+          if (found) {
+              return;
+          }
+
+          await addDoc(docRef, {
               displayName,
               email,
               picture: imageUrl,
@@ -33,16 +47,14 @@ const LoginButton = () => {
       }
   }
 
-  // Function to handle Google sign-in
   const handleGoogleSignIn = async () => {
       try {
           await signInWithGoogle();
           await registerWithGoogle();
-
       } catch (error) {
           console.error('Error signing in with Google:', error.message);
       }
-  }
+  };
 
 
   return (
