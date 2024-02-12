@@ -5,6 +5,8 @@ import Login from './registrations/Login';
 import Register from './registrations/Register';
 import Dashboard from '../pages/Dashboard';
 import Expenses from '../pages/Expenses';
+import ExpenseReport from '../pages/ExpenseReport';
+import Settlements from '../pages/Settlements';
 
 const App = () => {
 
@@ -17,8 +19,8 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/expenses" element={<Expenses />} />
-        <Route path="/reports" element={<div>Reports</div>} />
-        {/* <Route path="/settlement" element={<div>Settlement</div>} /> */}
+        <Route path="/reports" element={<ExpenseReport />} />
+        <Route path="/settlement" element={<Settlements />} />
         <Route path="/add-expense" element={<div>Add Expense</div>} />
 
 

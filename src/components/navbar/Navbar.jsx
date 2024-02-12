@@ -20,10 +20,10 @@ function Navbar() {
             Expenses
           </Link>
           <Link to="/reports" className="hover:text-gray-300">
-            Reports
+            Report
           </Link>
           <Link to="/settlement" className="hover:text-gray-300">
-            Settlement
+            Settlements
           </Link>
         </div>
 

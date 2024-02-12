@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../components/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ExpenseDetails from './ExpenseDetails';
-import { collection, getDocs, deleteDoc, doc, query, where, getDocs as getDocsDetail } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc} from 'firebase/firestore';
 import db from '../config/firebasedb';
 
 const Expenses = () => {
@@ -14,33 +14,47 @@ const Expenses = () => {
 
   const fetchExpenses = async () => {
     try {
+      // fetch expenses whose status is active
       const expensesCollection = collection(db, 'expense');
       const expensesSnapshot = await getDocs(expensesCollection);
-      const expensesData = expensesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const expensesData = expensesSnapshot.docs
+      .filter(doc => doc.data().status === 'active')
+      .map(doc => ({ id: doc.id, ...doc.data() }));
       setExpenses(expensesData);
     } catch (error) {
       console.error('Error fetching expenses:', error);
     }
   };
 
+  // const settleExpense = async (expenseId) => {
+  //   try {
+  //     // Remove the expense entry from the frontend
+  //     setExpenses(prevExpenses => prevExpenses.filter(expense => expense.id !== expenseId));
+
+  //     // Remove the expense entry from the 'expense' collection in Firebase
+  //     await deleteDoc(doc(db, 'expense', expenseId));
+
+  //     // Remove all entries related to this expense from the 'expense_detail' collection in Firebase
+  //     const expenseDetailQuery = query(collection(db, 'expense_detail'), where('expense_id', '==', expenseId));
+  //     const expenseDetailSnapshot = await getDocsDetail(expenseDetailQuery);
+  //     expenseDetailSnapshot.docs.forEach(async doc => {
+  //       await deleteDoc(doc.ref);
+  //     });
+  //   } catch (error) {
+  //     console.error('Error settling expense:', error);
+  //   }
+  // };
+
   const settleExpense = async (expenseId) => {
     try {
-      // Remove the expense entry from the frontend
-      setExpenses(prevExpenses => prevExpenses.filter(expense => expense.id !== expenseId));
-
-      // Remove the expense entry from the 'expense' collection in Firebase
-      await deleteDoc(doc(db, 'expense', expenseId));
-
-      // Remove all entries related to this expense from the 'expense_detail' collection in Firebase
-      const expenseDetailQuery = query(collection(db, 'expense_detail'), where('expense_id', '==', expenseId));
-      const expenseDetailSnapshot = await getDocsDetail(expenseDetailQuery);
-      expenseDetailSnapshot.docs.forEach(async doc => {
-        await deleteDoc(doc.ref);
-      });
+        // Update the status of the expense to "done"
+        await updateDoc(doc(db, 'expense', expenseId), {
+            status: 'done'
+        });
     } catch (error) {
-      console.error('Error settling expense:', error);
+        console.error('Error settling expense:', error);
     }
-  };
+};
 
   if (!currentUser) {
     navigate('/login');
@@ -76,9 +90,9 @@ const Expenses = () => {
                 <div className="flex-shrink-0">
                   <img src={expense.photo} alt="Expense" className="h-10 w-10 rounded-full" />
                 </div>
-                  <p className='text-primary text-green-800 text-lg'>{expense.totalExpense}</p>
-                  <p className='text-lg '>{expense.description}</p>
+                  <p className='text-primary text-green-800 text-lg w-14'>{expense.totalExpense}</p>
                   <p className='text-gray-600'>{expense.date}</p>
+                  <p className='text-lg '>{expense.description}</p>
                 </div>
   
               <div className='flex flex-row gap-6'>

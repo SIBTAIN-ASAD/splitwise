@@ -1,5 +1,5 @@
 const LogoutIcon = () => (
-    <svg class="stroke-gray-500 hover:stroke-gray-700" fill="#4b586b" height="23px" width="23px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 384.971 384.971" xmlSpace="preserve">
+    <svg className="stroke-gray-500 hover:stroke-gray-700" fill="#4b586b" height="23px" width="23px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 384.971 384.971" xmlSpace="preserve">
       <g>
         <g id="Sign_Out">
           <path d="M180.455,360.91H24.061V24.061h156.394c6.641,0,12.03-5.39,12.03-12.03s-5.39-12.03-12.03-12.03H12.03 C5.39,0.001,0,5.39,0,12.031V372.94c0,6.641,5.39,12.03,12.03,12.03h168.424c6.641,0,12.03-5.39,12.03-12.03 C192.485,366.299,187.095,360.91,180.455,360.91z" strokeWidth="8" />
