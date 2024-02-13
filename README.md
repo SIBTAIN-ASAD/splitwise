@@ -1,70 +1,44 @@
-# Getting Started with Create React App
+# Splitwise Expense Manager
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 📊 Overview
+Splitwise Expense Manager is a web application designed to help users manage and track their expenses easily. It allows users to add, view, settle, and analyze their expenses, providing a comprehensive overview of their financial transactions.
 
-## Available Scripts
+## ✨ Features
+- **Expense Tracking**: Easily add and view expenses, including details such as date, total amount, description, and user contributions.
+- **Expense Analysis**: Analyze expenses with detailed reports, including total expenses, individual user expenses, and budget tracking.
+- **Expense Settlement**: Settle expenses with just a click, simplifying the process of managing shared expenses.
+- **User Management**: Register and login users on firbase effectively.
 
-In the project directory, you can run:
 
-### `npm start`
+## 🔧 Technologies Used
+- **Frontend**: React.js for building the user interface, utilizing modern JavaScript features and libraries such as React Router for navigation.
+- **Backend**: Firebase Firestore for storing expense data, providing a reliable and scalable database solution.
+- **Authentication**: Firebase Authentication for user authentication and authorization, ensuring secure access to the application along with GOOGLE AUTHENTICATION.
+- **Styling**: Tailwind CSS for styling the application, allowing for responsive and visually appealing designs.
+- **Deployment**: Hosted on a platform like Vercel or Netlify for easy deployment and accessibility.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 🚀 Installation and Setup
+1. **Clone the repository**: `git clone https://github.com/Muhammad-Sibtain-Asad/splitwise.git`
+2. **Install dependencies**: `npm install`
+3. **Set up Firebase**: Create a Firebase project and configure Firebase Authentication and Firestore.
+4. **Set environment variables**: Create a `.env` file with your Firebase configuration details.
+5. **Run the application**: `npm start`
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 💡 Usage
+1. **Sign up or log in** to your Splitwise Expense Manager account.
+2. **Add expenses** by providing details such as date, amount, description, and user contributions.
+3. **View and analyze** your expenses using the dashboard and reports.
+4. **Settle expenses** with just a click, simplifying the process of managing shared expenses.
+5. **View Report** and details of all active expenses.
 
-### `npm test`
+## 🎥 Screenshots
+![Dashboard](/screenshots/dashboard.png)
+![Expense Details](/screenshots/expenses.png)
+![Expense Report](/screenshots/report.png)
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🤝 Contributing
+Contributions are welcome! Feel free to open issues or pull requests for any improvements or bug fixes.
 
-### `npm run build`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 📧 Contact
+For any inquiries or support, please contact [sibtain.asad@devsinc.com](mailto:sibtain.asad@devsinc.com).
