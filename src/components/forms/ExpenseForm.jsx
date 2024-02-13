@@ -6,6 +6,7 @@ import db from '../../config/firebasedb';
 import { useAuth } from '../AuthContext';
 import App from '../../config/firebase';
 import * as Yup from 'yup';
+import LoadingOverlay from '../loading/LoadingOverlay';
 
 const ExpenseForm = ({ usersData, onClose }) => {
     const { currentUser } = useAuth();
@@ -13,6 +14,7 @@ const ExpenseForm = ({ usersData, onClose }) => {
     // const [selectedUsers, setSelectedUsers] = useState([]);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     let recieptURL = null;
+    const [loading, setLoading] = useState(false);
 
     const uploadImage = async (userId) => {
         try {
@@ -47,6 +49,7 @@ const ExpenseForm = ({ usersData, onClose }) => {
                 .max(new Date(), 'Date cannot be in the future'),
         }),
         onSubmit: async (values, { resetForm }) => {
+            setLoading(true);
             await uploadImage(currentUser.uid);
             try {
                 const expenseRef = await addDoc(collection(db, 'expense'), {
@@ -57,7 +60,7 @@ const ExpenseForm = ({ usersData, onClose }) => {
                     status: values.status,
                     addedBy: currentUser.displayName,
                 });
-    
+
                 values.collaborators.forEach(async collaborator => {
                     const user = usersData.find(user => user.id === collaborator.id);
                     await addDoc(collection(db, 'expense_detail'), {
@@ -67,18 +70,20 @@ const ExpenseForm = ({ usersData, onClose }) => {
                         user_expense: collaborator.expense,
                     });
                 });
-    
+
                 resetForm();
                 onClose();
+                setLoading(false);
             } catch (error) {
                 console.error('Error adding expense:', error.message);
+                setLoading(false);
             }
         },
     });
 
 
     const handleExpenseChange = (e) => {
-    
+
         if (e.target.name === 'photo' && e.target.files.length > 0) {
             formik.setFieldValue('photo', e.target.files[0]);
         } else {
@@ -95,18 +100,18 @@ const ExpenseForm = ({ usersData, onClose }) => {
     };
 
     const handleAddCollaborator = (userId) => {
-            // if the collaborator need to be add already in the list, then return
-            if (formik.values.collaborators.some(collaborator => collaborator.id === userId)) {
-                return;
-            }
-            
-            if (formik.values.userExpenses[userId] !== '' && formik.values.userExpenses[userId] !== undefined) {
-                formik.setFieldValue('collaborators', [...formik.values.collaborators, {
-                    id: userId,
-                    expense: formik.values.userExpenses[userId],
-                }]);
-                // setSelectedUsers(selectedUsers.filter(user => user !== userId));
-            }
+        // if the collaborator need to be add already in the list, then return
+        if (formik.values.collaborators.some(collaborator => collaborator.id === userId)) {
+            return;
+        }
+
+        if (formik.values.userExpenses[userId] !== '' && formik.values.userExpenses[userId] !== undefined) {
+            formik.setFieldValue('collaborators', [...formik.values.collaborators, {
+                id: userId,
+                expense: formik.values.userExpenses[userId],
+            }]);
+            // setSelectedUsers(selectedUsers.filter(user => user !== userId));
+        }
     };
 
     const handleRemoveCollaborator = (userId) => {
@@ -124,52 +129,54 @@ const ExpenseForm = ({ usersData, onClose }) => {
 
 
     return (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
-            <div className="bg-white p-6 rounded-md w-full max-w-md">
-                <form onSubmit={formik.handleSubmit}>
-                    <div className="mb-4">
-                        <label htmlFor="totalExpense" className="block text-gray-700">Total Expense:</label>
-                        <input
-                            type="number"
-                            id="totalExpense"
-                            name="totalExpense"
-                            value={formik.values.totalExpense}
-                            onChange={handleExpenseChange}
-                            onBlur={formik.handleBlur}
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:border-blue-500"
-                        />
-                        {formik.touched.totalExpense && formik.errors.totalExpense ? (
-                            <div className="text-red-600">{formik.errors.totalExpense}</div>
-                        ) : null}
-                    </div>
+        <>
+            {loading && <LoadingOverlay />}
+            <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
+                <div className="bg-white p-6 rounded-md w-full max-w-md">
+                    <form onSubmit={formik.handleSubmit}>
+                        <div className="mb-4">
+                            <label htmlFor="totalExpense" className="block text-gray-700">Total Expense:</label>
+                            <input
+                                type="number"
+                                id="totalExpense"
+                                name="totalExpense"
+                                value={formik.values.totalExpense}
+                                onChange={handleExpenseChange}
+                                onBlur={formik.handleBlur}
+                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:border-blue-500"
+                            />
+                            {formik.touched.totalExpense && formik.errors.totalExpense ? (
+                                <div className="text-red-600">{formik.errors.totalExpense}</div>
+                            ) : null}
+                        </div>
 
-                    <div className="mb-4 relative">
-                        <label htmlFor="userSelect" className="block text-gray-700">Collaborators:</label>
-                        <div className="relative">
-                            <div className="mt-4">
-                                <ul className="list-disc ml-6">
-                                    {formik.values.collaborators.map(collaborator => (
-                                        <li key={collaborator.id} className="flex justify-between">
-                                            <span className='text-blue-600'>{usersData.find(user => user.id === collaborator.id).displayName} - ${collaborator.expense}</span>
-                                            <button type="button" onClick={() => handleRemoveCollaborator(collaborator.id)} className="text-red-500 mx-5 hover:text-red-700">X</button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
+                        <div className="mb-4 relative">
+                            <label htmlFor="userSelect" className="block text-gray-700">Collaborators:</label>
+                            <div className="relative">
+                                <div className="mt-4">
+                                    <ul className="list-disc ml-6">
+                                        {formik.values.collaborators.map(collaborator => (
+                                            <li key={collaborator.id} className="flex justify-between">
+                                                <span className='text-blue-600'>{usersData.find(user => user.id === collaborator.id).displayName} - ${collaborator.expense}</span>
+                                                <button type="button" onClick={() => handleRemoveCollaborator(collaborator.id)} className="text-red-500 mx-5 hover:text-red-700">X</button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
 
-                            <button id="dropdownDefaultButton" data-dropdown-toggle="dropdown" 
+                                <button id="dropdownDefaultButton" data-dropdown-toggle="dropdown"
                                     className="w-full flex justify-between px-3 py-2 border rounded-md cursor-pointer focus:outline-none text-gray-700 hover:border-blue-500 "
                                     type="button"
                                     onClick={() => setDropdownOpen(!dropdownOpen)}
-                            >
-                                Select User
+                                >
+                                    Select User
                                     <svg class="w-2.5 h-2.5 ms-3 mt-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4" />
                                     </svg>
-                                    
-                            </button>
 
-                            {dropdownOpen && (
+                                </button>
+
+                                {dropdownOpen && (
                                     <ul className="absolute top-full left-0 right-0 z-10 bg-white border border-gray-300 rounded-b-md mt-1 overflow-scroll h-60">
                                         {usersData.map(user => (
                                             <li key={user.id} className="px-3 my-2 py-2">
@@ -186,70 +193,71 @@ const ExpenseForm = ({ usersData, onClose }) => {
                                                     value={formik.values.userExpenses[user.id] || ''}
                                                     onChange={(e) => handleUserExpenseChange(e, user.id)}
                                                     className="w-20 px-2 py-1 border rounded-md focus:outline-none focus:border-blue-500 float-end mx-3"
-                                                    
+
                                                 />
                                             </li>
                                         ))}
                                     </ul>
                                 )}
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="mb-4">
-                        <label htmlFor="description" className="block text-gray-700">Expense Description:</label>
-                        <input
-                            type="text"
-                            id="description"
-                            name="description"
-                            value={formik.values.description}
-                            onChange={handleExpenseChange}
-                            onBlur={formik.handleBlur}
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:border-blue-500"
-                        />
-                        {formik.touched.description && formik.errors.description ? (
-                            <div className="text-red-600">{formik.errors.description}</div>
-                        ) : null}
-                    </div>
+                        <div className="mb-4">
+                            <label htmlFor="description" className="block text-gray-700">Expense Description:</label>
+                            <input
+                                type="text"
+                                id="description"
+                                name="description"
+                                value={formik.values.description}
+                                onChange={handleExpenseChange}
+                                onBlur={formik.handleBlur}
+                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:border-blue-500"
+                            />
+                            {formik.touched.description && formik.errors.description ? (
+                                <div className="text-red-600">{formik.errors.description}</div>
+                            ) : null}
+                        </div>
 
-                    <div className="mb-4">
-                        <label htmlFor="date" className="block text-gray-700">Expense Date:</label>
-                        <input
-                            type="date"
-                            id="date"
-                            name="date"
-                            value={formik.values.date}
-                            onChange={handleExpenseChange}
-                            onBlur={formik.handleBlur}
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:border-blue-500"
-                        />
-                        {formik.touched.date && formik.errors.date ? (
-                            <div className="text-red-600">{formik.errors.date}</div>
-                        ) : null}
-                    </div>
+                        <div className="mb-4">
+                            <label htmlFor="date" className="block text-gray-700">Expense Date:</label>
+                            <input
+                                type="date"
+                                id="date"
+                                name="date"
+                                value={formik.values.date}
+                                onChange={handleExpenseChange}
+                                onBlur={formik.handleBlur}
+                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:border-blue-500"
+                            />
+                            {formik.touched.date && formik.errors.date ? (
+                                <div className="text-red-600">{formik.errors.date}</div>
+                            ) : null}
+                        </div>
 
-                    <div className="mb-4">
-                        <label htmlFor="photo" className="block text-gray-700">Expense Photo:</label>
-                        <input
-                            type="file"
-                            id="photo"
-                            name="photo"
-                            accept="image/*"
-                            onChange={handleExpenseChange}
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:border-blue-500"
-                        />
-                    </div>
+                        <div className="mb-4">
+                            <label htmlFor="photo" className="block text-gray-700">Expense Photo:</label>
+                            <input
+                                type="file"
+                                id="photo"
+                                name="photo"
+                                accept="image/*"
+                                onChange={handleExpenseChange}
+                                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:border-blue-500"
+                            />
+                        </div>
 
-                    <button className="bg-red-500 text-white px-4 mx-2 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:bg-red-600 mt-4 float-end"
-                        onClick={handleCancel}
-                    >
-                        Cancel</button>
+                        <button className="bg-red-500 text-white px-4 mx-2 py-2 rounded-md hover:bg-red-600 focus:outline-none focus:bg-red-600 mt-4 float-end"
+                            onClick={handleCancel}
+                        >
+                            Cancel</button>
 
-                    <button type="submit"
-                     className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600 mt-4 float-end">
-                        Submit</button>
-                </form>
+                        <button type="submit"
+                            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:bg-blue-600 mt-4 float-end">
+                            Submit</button>
+                    </form>
+                </div>
             </div>
-        </div>
+        </>
     );
 };
 

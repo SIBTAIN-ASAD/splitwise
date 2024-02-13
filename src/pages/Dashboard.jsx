@@ -4,21 +4,26 @@ import { useNavigate } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import db from '../config/firebasedb';
 import ExpenseForm from '../components/forms/ExpenseForm';
+import LoadingOverlay from '../components/loading/LoadingOverlay';
 
 const Dashboard = () => {
   const [usersData, setUsersData] = useState([]);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
+      setLoading(true);
       try {
         const usersCollection = collection(db, 'user_detail'); // Assuming the collection name is 'user_detail'
         const usersSnapshot = await getDocs(usersCollection);
         const usersData = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setUsersData(usersData);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching users:', error);
+        setLoading(false);
       }
     };
 
@@ -38,6 +43,7 @@ const Dashboard = () => {
 
   return (
     <>
+    {loading && <LoadingOverlay />}
     <section className='flex justify-center items-center py-16 px-10 md:px-0 bg-white'>
       <div className='w-full md:w-3/4 flex flex-col md:flex-row gap-10'>
         {currentUser && (

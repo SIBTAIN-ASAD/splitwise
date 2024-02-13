@@ -6,10 +6,12 @@ import { useAuth } from '../AuthContext';
 import { collection, addDoc } from 'firebase/firestore';
 import App from '../../config/firebase';
 import db from '../../config/firebasedb';
+import LoadingOverlay from '../loading/LoadingOverlay';
 
 const Register = () => {
     const auth = getAuth(App);
     const storage = getStorage(App);
+    const [loading, setLoading] = useState(false);
     let imageURL = '';
     const [formData, setFormData] = useState({
         username: '',
@@ -32,6 +34,7 @@ const Register = () => {
 
     const register = async () => {
         try {
+            setLoading(true);
             const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
             const user = userCredential.user;
     
@@ -44,8 +47,11 @@ const Register = () => {
     
             // Upload image if provided
             await storeUserDetails(user); // Await the storeUserDetails function call
+            setLoading(false);
+            navigate('/');
         } catch (error) {
             console.error('Error creating user:', error.message);
+            setLoading(false);
         }
     }
     
@@ -62,7 +68,6 @@ const Register = () => {
                 email: user.email,
                 userID: user.uid,
             });
-            navigate('/');
         } catch (error) {
             console.error('Error storing user details:', error.message);
         }
@@ -126,6 +131,8 @@ const Register = () => {
 
 
     return (
+        <>
+        {loading && <LoadingOverlay />}
         <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
             <div className="bg-gray-800 p-8 rounded shadow-md w-96">
                 <h1 className="text-3xl font-bold mb-6 text-center">Register</h1>
@@ -217,6 +224,7 @@ const Register = () => {
                 </p>
             </div>
         </div>
+        </>
     );
 };
 

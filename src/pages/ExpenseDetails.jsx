@@ -1,20 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import db from '../config/firebasedb';
+import LoadingOverlay from '../components/loading/LoadingOverlay';
 
 const ExpenseDetails = ({ expense, onClose }) => {
   const [userExpenses, setUserExpenses] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchUserExpenses = async () => {
+      setLoading(true);
       try {
         const expenseDetailQuery = query(collection(db, 'expense_detail'), where('expense_id', '==', expense.id));
         const expenseDetailSnapshot = await getDocs(expenseDetailQuery);
         const userExpensesData = expenseDetailSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setUserExpenses(userExpensesData);
         console.log(userExpensesData.length);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching user expenses:', error);
+        setLoading(false);
       }
     };
 
@@ -45,6 +50,8 @@ const ExpenseDetails = ({ expense, onClose }) => {
   };
 
   return (
+    <>
+    {loading && <LoadingOverlay />}
     <div className='popup fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-900 bg-opacity-50'>
       <div className='popup-content bg-white px-8 py-6 rounded-lg border border-gray-300 shadow-lg max-w-2xl px-auto flex flex-justify-center flex-col'>
         <h2 className='text-xl font-bold mb-4 mx-auto'>Expense Report</h2>
@@ -99,6 +106,7 @@ const ExpenseDetails = ({ expense, onClose }) => {
         </button>
       </div>
     </div>
+    </>
   );
 };
 

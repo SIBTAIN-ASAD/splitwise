@@ -1,19 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../components/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ExpenseDetails from './ExpenseDetails';
 import { collection, getDocs, doc, updateDoc} from 'firebase/firestore';
 import db from '../config/firebasedb';
+import LoadingOverlay from '../components/loading/LoadingOverlay';
 
 const Expenses = () => {
   const [selectedExpense, setSelectedExpense] = useState(null);
   const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
   const fetchExpenses = async () => {
     try {
+      setLoading(true);
       // fetch expenses whose status is active
       const expensesCollection = collection(db, 'expense');
       const expensesSnapshot = await getDocs(expensesCollection);
@@ -21,28 +24,35 @@ const Expenses = () => {
       .filter(doc => doc.data().status === 'active')
       .map(doc => ({ id: doc.id, ...doc.data() }));
       setExpenses(expensesData);
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching expenses:', error);
+      setLoading(false);
     }
   };
 
 
   const settleExpense = async (expenseId) => {
     try {
+        setLoading(true);
         // Update the status of the expense to "done"
         await updateDoc(doc(db, 'expense', expenseId), {
             status: 'done'
         });
+        setLoading(false);
     } catch (error) {
         console.error('Error settling expense:', error);
+        setLoading(false);
     }
 };
 
   if (!currentUser) {
     navigate('/login');
-  } else {
+  } 
+
+  useEffect(() => {
     fetchExpenses();
-  }
+  }, []);
 
   const handleViewExpense = (expense) => {
     setSelectedExpense(expense);
@@ -53,6 +63,8 @@ const Expenses = () => {
   };
 
   return (
+    <>
+    {loading && <LoadingOverlay />}
     <section className='flex justify-center items-center py-16 px-10 md:px-1 relative'>
       <div className='w-3/5 flex flex-col gap-8'>
         <div>
@@ -101,6 +113,7 @@ const Expenses = () => {
         <ExpenseDetails expense={selectedExpense} onClose={handleClosePopup} />
       )}
     </section>
+    </>
   );
 };
 
