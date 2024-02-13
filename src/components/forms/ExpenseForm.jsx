@@ -47,8 +47,20 @@ const ExpenseForm = ({ usersData, onClose }) => {
             date: Yup.date()
                 .required('Date is required')
                 .max(new Date(), 'Date cannot be in the future'),
+            collaborators: Yup.array().of(
+                Yup.object().shape({
+                    id: Yup.string().required(),
+                    expense: Yup.number().required().min(0, 'Expense must be a positive number'),
+                })
+            ),
+
         }),
         onSubmit: async (values, { resetForm }) => {
+            // if total expense is not equal to sum of user expenses, then return
+            if (values.totalExpense !== Object.values(values.userExpenses).reduce((acc, curr) => acc + curr, 0)) {
+                alert('Total expense must be equal to sum of user expenses');
+                return;
+            }
             setLoading(true);
             await uploadImage(currentUser.uid);
             try {
@@ -93,6 +105,11 @@ const ExpenseForm = ({ usersData, onClose }) => {
 
     const handleUserExpenseChange = (e, userId) => {
         const { value } = e.target;
+        // if value is negative, then return
+        if (value < 0) {
+            alert('Expense must be a positive number');
+            return;
+        }
         formik.setFieldValue('userExpenses', {
             ...formik.values.userExpenses,
             [userId]: value === '' ? '' : parseFloat(value),
@@ -131,7 +148,7 @@ const ExpenseForm = ({ usersData, onClose }) => {
     return (
         <>
             {loading && <LoadingOverlay />}
-            <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
+            <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-40">
                 <div className="bg-white p-6 rounded-md w-full max-w-md">
                     <form onSubmit={formik.handleSubmit}>
                         <div className="mb-4">
