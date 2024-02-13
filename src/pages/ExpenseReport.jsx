@@ -1,48 +1,59 @@
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, updateDoc } from 'firebase/firestore';
 import db from '../config/firebasedb';
 
 const ExpenseReport = () => {
-  const [userExpenses, setUserExpenses] = useState([]);
-  const [totalExpense, setTotalExpense] = useState(0);
-  const [userPayments, setUserPayments] = useState({});
+  const [expense_details, setExpense_details] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [users, setUsers] = useState({});
 
-
+  useEffect(() => {
+    fetchUserExpenses();
+    fetchUsers();
+  }, []);
 
   const fetchUserExpenses = async () => {
     try {
-      // Fetch all expenses whose status is active
       const expensesCollection = collection(db, 'expense');
       const expensesSnapshot = await getDocs(expensesCollection);
       const expenseData = expensesSnapshot.docs
         .filter(doc => doc.data().status === 'active')
         .map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      // Fetch all expense details
+      setExpenses(expenseData);
+
       const expenseDetailCollection = collection(db, 'expense_detail');
       const expenseDetailSnapshot = await getDocs(expenseDetailCollection);
       const expenseDetailData = expenseDetailSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      setUserExpenses(expenseData);
-      calculateTotalExpense(expenseData);
-      calculateUserPayments(expenseDetailData);
+      setExpense_details(expenseDetailData);
     } catch (error) {
       console.error('Error fetching expenses:', error);
     }
   };
 
-  useEffect(() => {
-    fetchUserExpenses();
-  });
-
-  const calculateTotalExpense = (expenses) => {
-    // Calculate total expense
-    const total = expenses.reduce((acc, expense) => acc + parseFloat(expense.totalExpense), 0);
-    setTotalExpense(total);
+  const fetchUsers = async () => {
+    try {
+      const usersCollection = collection(db, 'user_detail');
+      const usersSnapshot = await getDocs(usersCollection);
+      const usersData = {};
+      usersSnapshot.forEach(doc => {
+        usersData[doc.id] = doc.data().displayName;
+      });
+      setUsers(usersData);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
   };
 
-  const calculateUserPayments = (expenseDetails) => {
-    // Calculate individual user payments
+  const calculateTotalExpense = () => {
+    let totalExpense = 0;
+    expenses.forEach(expense => {
+      totalExpense += parseFloat(expense.totalExpense);
+    });
+    return totalExpense.toFixed(2);
+  };
+
+  const calculateEachExpense = (expenseID) => {
+    const expenseDetails = expense_details.filter(detail => detail.expense_id === expenseID);
     const userPayments = {};
     expenseDetails.forEach(detail => {
       const { user_id, user_expense } = detail;
@@ -51,37 +62,89 @@ const ExpenseReport = () => {
       }
       userPayments[user_id] += parseFloat(user_expense);
     });
-    setUserPayments(userPayments);
+
+    const numberOfUsers = Object.keys(userPayments).length;
+    let average = 0;
+    let totalExpense = 0;
+    Object.keys(userPayments).forEach(userId => {
+      totalExpense += userPayments[userId];
+    });
+    average = totalExpense / numberOfUsers;
+    const remainingExpense = {};
+    Object.keys(userPayments).forEach(userId => {
+      remainingExpense[userId] = (userPayments[userId] - average).toFixed(2);
+    });
+    return [totalExpense.toFixed(2), remainingExpense];
+  };
+
+  const calculateBudget = () => {
+    const userBudget = {};
+    expenses.forEach(expense => {
+      const data = calculateEachExpense(expense.id);
+      Object.keys(data[1]).forEach(userId => {
+        if (!userBudget[userId]) {
+          userBudget[userId] = 0;
+        }
+        userBudget[userId] = (parseFloat(userBudget[userId]) + parseFloat(data[1][userId])).toFixed(2);
+
+      });
+    });
+    return userBudget;
   };
 
   const settleExpenses = () => {
-    // Logic to settle expenses
+    const confirmation = window.confirm("Are you sure you want to settle all expenses? (This action will not be undone)");
+    if (confirmation) {
+      expenses.forEach(async expense => {
+        const expenseRef = collection(db, 'expense');
+        await updateDoc(expenseRef, expense.id, {
+          status: 'settled'
+        });
+      });
+      window.location.reload();
+    }
   };
+  
 
   return (
-    <div className="p-4 my-10 overflow-scroll bg-gray-100 rounded-lg shadow-md w-full mx-auto flex align-middle flex-col max-w-3xl">
-      <h2 className="text-2xl my-4 font-semibold mx-auto">Expense Report</h2>
-      <div className="mb-8">
-        <p className="text-lg font-semibold">Total Expense: ${totalExpense}</p>
-        <ul className="list-disc pl-6">
-          {Object.keys(userPayments).map(userId => (
-            <li key={userId}>User {userId}: ${userPayments[userId]}</li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <h3 className="text-xl font-semibold mb-4">Expense Details</h3>
-        {userExpenses.map(expense => (
-          <div key={expense.id} className="border-b border-gray-200 pb-4 mb-4">
-            <p className="text-lg font-semibold mb-2">Date: {expense.date}</p>
-            <p><strong>Expense:</strong> {expense.totalExpense}</p>
-            <p><strong>Description:</strong> {expense.description}</p>
-          </div>
+    <div className="p-4 my-10 bg-gray-100 rounded-lg shadow-md w-full mx-auto max-w-3xl">
+    <h2 className="text-3xl my-4 font-semibold text-center">All Expenses' Report</h2>
+    <div className="mb-8 pb-4">
+      <p className="text-lg font-semibold text-center  text-blue-800">Total Expense: ${calculateTotalExpense()}</p>
+      <ul className="list-disc pl-6">
+        {Object.keys(calculateBudget()).map(userId => (
+          <li className='flex items-center py-1' key={userId}>
+            <span className='w-40'>{users[userId]}:</span> 
+            <span className={parseFloat(calculateBudget()[userId]) >= 0 ? 'text-green-800' : 'text-red-800'}>
+              ${calculateBudget()[userId]}
+            </span>
+          </li>
         ))}
-      </div>
-      <button className="bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 mt-8" onClick={settleExpenses}>Settle All Expenses</button>
-      <p className="italic mt-2">Are you sure you want to settle all expenses?</p>
+      </ul>
     </div>
+    <div>
+      <h2 className="text-xl font-semibold mb-2 py-6 border-y-4 text-center">Expense Details</h2>
+      {expenses.map(expense => (
+        <div key={expense.id} className="border-b border-gray-300 pb-4 mb-4">
+          <p className="text-lg font-semibold mb-2">Date: {expense.date}</p>
+          <p className=' text-blue-800'><strong className='mr-8'>Expense:</strong> {parseFloat(expense.totalExpense).toFixed(2)}</p>
+          <p><strong className='mr-4'>Description:</strong > {expense.description}</p>
+          <p className='mb-8'><strong className='mr-6'>Added By:</strong> {expense.addedBy}</p>
+          {Object.keys(calculateEachExpense(expense.id)[1]).map(userId => (
+            <div className="flex items-center py-1" key={userId}>
+              <span className='w-40'>{users[userId]}:</span> 
+              <span className={parseFloat(calculateEachExpense(expense.id)[1][userId]) >= 0 ? 'text-green-800' : 'text-red-800'}>
+                {calculateEachExpense(expense.id)[1][userId]}
+              </span>
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+    <div className="flex justify-center mt-8">
+      <button className="bg-green-500 w-full text-white py-2 px-4 rounded-md hover:bg-green-600" onClick={settleExpenses}>Settle All Expenses</button>
+    </div>
+  </div>
   );
 };
 
