@@ -26,24 +26,6 @@ const Expenses = () => {
     }
   };
 
-  // const settleExpense = async (expenseId) => {
-  //   try {
-  //     // Remove the expense entry from the frontend
-  //     setExpenses(prevExpenses => prevExpenses.filter(expense => expense.id !== expenseId));
-
-  //     // Remove the expense entry from the 'expense' collection in Firebase
-  //     await deleteDoc(doc(db, 'expense', expenseId));
-
-  //     // Remove all entries related to this expense from the 'expense_detail' collection in Firebase
-  //     const expenseDetailQuery = query(collection(db, 'expense_detail'), where('expense_id', '==', expenseId));
-  //     const expenseDetailSnapshot = await getDocsDetail(expenseDetailQuery);
-  //     expenseDetailSnapshot.docs.forEach(async doc => {
-  //       await deleteDoc(doc.ref);
-  //     });
-  //   } catch (error) {
-  //     console.error('Error settling expense:', error);
-  //   }
-  // };
 
   const settleExpense = async (expenseId) => {
     try {

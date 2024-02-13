@@ -23,7 +23,6 @@ const App = () => {
         <Route path="/settlement" element={<Settlements />} />
         <Route path="/add-expense" element={<div>Add Expense</div>} />
 
-
       </Routes>
     </BrowserRouter>
   );

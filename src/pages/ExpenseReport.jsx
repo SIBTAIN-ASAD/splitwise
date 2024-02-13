@@ -110,13 +110,13 @@ const ExpenseReport = () => {
     <div className="p-4 my-10 bg-gray-100 rounded-lg shadow-md w-full mx-auto max-w-3xl">
     <h2 className="text-3xl my-4 font-semibold text-center">All Expenses' Report</h2>
     <div className="mb-8 pb-4">
-      <p className="text-lg font-semibold text-center  text-blue-800">Total Expense: ${calculateTotalExpense()}</p>
+      <p className="text-lg font-semibold text-center  text-blue-800">Total Expense: {calculateTotalExpense()}</p>
       <ul className="list-disc pl-6">
         {Object.keys(calculateBudget()).map(userId => (
           <li className='flex items-center py-1' key={userId}>
             <span className='w-40'>{users[userId]}:</span> 
             <span className={parseFloat(calculateBudget()[userId]) >= 0 ? 'text-green-800' : 'text-red-800'}>
-              ${calculateBudget()[userId]}
+              {calculateBudget()[userId]}
             </span>
           </li>
         ))}
