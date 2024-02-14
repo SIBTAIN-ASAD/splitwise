@@ -1,12 +1,12 @@
 import React from 'react';
-import Navbar from './navbar/Navbar';
+import Navbar from '../components/navbar/Navbar';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import Login from './registrations/Login';
-import Register from './registrations/Register';
-import Dashboard from '../pages/Dashboard';
-import Expenses from '../pages/Expenses';
-import ExpenseReport from '../pages/ExpenseReport';
-import Settlements from '../pages/Settlements';
+import Login from '../components/registrations/Login';
+import Register from '../components/registrations/Register';
+import Dashboard from './Dashboard';
+import Expenses from './Expenses';
+import ExpenseReport from './ExpenseReport';
+import Settlements from './Settlements';
 
 const App = () => {
 
