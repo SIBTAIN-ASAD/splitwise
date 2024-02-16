@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { collection, getDocs, updateDoc } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import db from '../config/firebasedb';
 import LoadingOverlay from '../components/loading/LoadingOverlay';
+import { calculateTotalExpense, calculateEachExpense, calculateBudget, settleExpenses } from '../helpers/ExpenseReportHelper';
 
 const ExpenseReport = () => {
   const [expense_details, setExpense_details] = useState([]);
@@ -52,81 +53,21 @@ const ExpenseReport = () => {
     }
   };
 
-  const calculateTotalExpense = () => {
-    let totalExpense = 0;
-    expenses.forEach(expense => {
-      totalExpense += parseFloat(expense.totalExpense);
-    });
-    return totalExpense.toFixed(2);
-  };
-
-  const calculateEachExpense = (expenseID) => {
-    const expenseDetails = expense_details.filter(detail => detail.expense_id === expenseID);
-    const userPayments = {};
-    expenseDetails.forEach(detail => {
-      const { user_id, user_expense } = detail;
-      if (!userPayments[user_id]) {
-        userPayments[user_id] = 0;
-      }
-      userPayments[user_id] += parseFloat(user_expense);
-    });
-
-    const numberOfUsers = Object.keys(userPayments).length;
-    let average = 0;
-    let totalExpense = 0;
-    Object.keys(userPayments).forEach(userId => {
-      totalExpense += userPayments[userId];
-    });
-    average = totalExpense / numberOfUsers;
-    const remainingExpense = {};
-    Object.keys(userPayments).forEach(userId => {
-      remainingExpense[userId] = (userPayments[userId] - average).toFixed(2);
-    });
-    return [totalExpense.toFixed(2), remainingExpense];
-  };
-
-  const calculateBudget = () => {
-    const userBudget = {};
-    expenses.forEach(expense => {
-      const data = calculateEachExpense(expense.id);
-      Object.keys(data[1]).forEach(userId => {
-        if (!userBudget[userId]) {
-          userBudget[userId] = 0;
-        }
-        userBudget[userId] = (parseFloat(userBudget[userId]) + parseFloat(data[1][userId])).toFixed(2);
-
-      });
-    });
-    return userBudget;
-  };
-
-  const settleExpenses = () => {
-    const confirmation = window.confirm("Are you sure you want to settle all expenses? (This action will not be undone)");
-    if (confirmation) {
-      expenses.forEach(async expense => {
-        const expenseRef = collection(db, 'expense');
-        await updateDoc(expenseRef, expense.id, {
-          status: 'settled'
-        });
-      });
-      window.location.reload();
-    }
-  };
-
 
   return (
     <>
       {loading && <LoadingOverlay />}
+      {!loading &&
       <div className="p-4 my-10 bg-gray-100 rounded-lg shadow-md w-full mx-auto max-w-3xl">
         <h2 className="text-3xl my-4 font-semibold text-center">All Expenses' Report</h2>
         <div className="mb-8 pb-4">
-          <p className="text-lg font-semibold text-center  text-blue-800">Total Expense: {calculateTotalExpense()}</p>
+          <p className="text-lg font-semibold text-center  text-blue-800">Total Expense: {calculateTotalExpense({expenses: expenses})}</p>
           <ul className="list-disc pl-6">
-            {Object.keys(calculateBudget()).map(userId => (
+            {Object.keys(calculateBudget({expense_details: expense_details,expenses : expenses})).map(userId => (
               <li className='flex items-center py-1' key={userId}>
                 <span className='w-40'>{users[userId]}:</span>
-                <span className={parseFloat(calculateBudget()[userId]) >= 0 ? 'text-green-800' : 'text-red-800'}>
-                  {calculateBudget()[userId]}
+                <span className={parseFloat(calculateBudget({expense_details: expense_details,expenses: expenses})[userId]) >= 0 ? 'text-green-800' : 'text-red-800'}>
+                  {calculateBudget({expense_details: expense_details,expenses : expenses})[userId]}
                 </span>
               </li>
             ))}
@@ -140,11 +81,11 @@ const ExpenseReport = () => {
               <p className=' text-blue-800'><strong className='mr-8'>Expense:</strong> {parseFloat(expense.totalExpense).toFixed(2)}</p>
               <p><strong className='mr-4'>Description:</strong > {expense.description}</p>
               <p className='mb-8'><strong className='mr-6'>Added By:</strong> {expense.addedBy}</p>
-              {Object.keys(calculateEachExpense(expense.id)[1]).map(userId => (
+              {Object.keys(calculateEachExpense({expense_details: expense_details,expenseID : expense.id})[1]).map(userId => (
                 <div className="flex items-center py-1" key={userId}>
                   <span className='w-40'>{users[userId]}:</span>
-                  <span className={parseFloat(calculateEachExpense(expense.id)[1][userId]) >= 0 ? 'text-green-800' : 'text-red-800'}>
-                    {calculateEachExpense(expense.id)[1][userId]}
+                  <span className={parseFloat(calculateEachExpense({expense_details: expense_details, expenseID : expense.id})[1][userId]) >= 0 ? 'text-green-800' : 'text-red-800'}>
+                    {calculateEachExpense({expense_details: expense_details,expenseID : expense.id})[1][userId]}
                   </span>
                 </div>
               ))}
@@ -152,11 +93,10 @@ const ExpenseReport = () => {
           ))}
         </div>
         <div className="flex justify-center mt-8">
-          <button className="bg-green-500 w-full text-white py-2 px-4 rounded-md hover:bg-green-600" onClick={settleExpenses}>Settle All Expenses</button>
+          <button className="bg-green-500 w-full text-white py-2 px-4 rounded-md hover:bg-green-600" onClick={(() => settleExpenses({expenses : expenses}))}>Settle All Expenses</button>
         </div>
-      </div>
+      </div>}
     </>
-
   );
 };
 

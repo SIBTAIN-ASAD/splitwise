@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import db from '../config/firebasedb';
 import LoadingOverlay from './loading/LoadingOverlay';
+import { calculateNetExpense, getUserExpense } from '../helpers/ExpenseDetailHelper';
 
 const ExpenseDetails = ({ expense, onClose }) => {
   const [userExpenses, setUserExpenses] = useState([]);
@@ -15,7 +16,6 @@ const ExpenseDetails = ({ expense, onClose }) => {
         const expenseDetailSnapshot = await getDocs(expenseDetailQuery);
         const userExpensesData = expenseDetailSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setUserExpenses(userExpensesData);
-        console.log(userExpensesData.length);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching user expenses:', error);
@@ -26,28 +26,7 @@ const ExpenseDetails = ({ expense, onClose }) => {
     fetchUserExpenses();
   }, [expense.id]);
 
-  // Calculate net expense for each user
-  const calculateNetExpense = (userId) => {
-    let netExpense = 0;
-    let numberOfUsers = userExpenses.length;
-    let average = parseFloat(expense.totalExpense) / numberOfUsers;
-    for (let i = 0; i < userExpenses.length; i++) {
-      if (userExpenses[i].user_id === userId) {
-        netExpense = parseFloat(userExpenses[i].user_expense) - average;
-      }
-    }
-    return netExpense;
-  };
 
-
-  // get the user expense from id
-  const getUserExpense = (userId) => {
-    for (let i = 0; i < userExpenses.length; i++) {
-      if (userExpenses[i].user_id === userId) {
-        return userExpenses[i].user_expense;
-      }
-    }
-  };
 
   return (
     <>
@@ -64,30 +43,30 @@ const ExpenseDetails = ({ expense, onClose }) => {
             {userExpenses.map(userExpense => (
               <div key={userExpense.user_id} className="py-2">
                 <p className='flex justify-between'>
-                  {calculateNetExpense(userExpense.user_id) > 0 ? (
+                  {calculateNetExpense({userExpenses: userExpenses,userID:userExpense.user_id, expense : expense}) > 0 ? (
                     <div className="flex justify-between">
                       <span className="font-semibold text-green-800 w-52">{userExpense.user_name}:</span>
-                      <span className='text-slate-500 w-32'> (paid: {getUserExpense(userExpense.user_id)}) </span>
+                      <span className='text-slate-500 w-32'> (paid: {getUserExpense({userExpenses : userExpenses, userID:  userExpense.user_id})}) </span>
                       <span className="text-green-800 mx-2 w-32">will get back</span>
                     </div>
-                  ) : calculateNetExpense(userExpense.user_id) < 0 ? (
+                  ) : calculateNetExpense({userExpenses: userExpenses,userID:userExpense.user_id, expense : expense}) < 0 ? (
                     <div className='flex justify-between'>
                       <span className="font-semibold text-red-800 w-52">{userExpense.user_name}:</span>
-                      <span className='text-slate-500 w-32'> (paid: {getUserExpense(userExpense.user_id)}) </span>
+                      <span className='text-slate-500 w-32'> (paid: {getUserExpense({userExpenses : userExpenses, userID:  userExpense.user_id})}) </span>
                       <span className="text-red-800 mx-2 w-32">has to pay</span>
                     </div>
                   ) : (
                     <div className='flex justify-between'>
                       <span className="font-semibold text-gray-800 w-52">{userExpense.user_name}:</span>
-                      <span className='text-slate-500 w-32'> (paid: {getUserExpense(userExpense.user_id)}) </span>
+                      <span className='text-slate-500 w-32'> (paid: {getUserExpense({userExpenses : userExpenses, userID:  userExpense.user_id})}) </span>
                       <span className="text-gray-800 mx-2 w-32">is settled</span>
                     </div>
                   )}
-                  {calculateNetExpense(userExpense.user_id) !== 0 && (
-                    calculateNetExpense(userExpense.user_id) > 0 ? (
-                      <span className="font-semibold text-green-800 float-right">+ {calculateNetExpense(userExpense.user_id)}</span>
+                  {calculateNetExpense({userExpenses: userExpenses,userID:userExpense.user_id, expense : expense}) !== 0 && (
+                    calculateNetExpense({userExpenses: userExpenses,userID:userExpense.user_id, expense : expense}) > 0 ? (
+                      <span className="font-semibold text-green-800 float-right">+ {calculateNetExpense({userExpenses: userExpenses,userID:userExpense.user_id, expense : expense})}</span>
                     ) : (
-                      <span className="font-semibold text-red-800 float-right">- {Math.abs(calculateNetExpense(userExpense.user_id))}</span>
+                      <span className="font-semibold text-red-800 float-right">- {Math.abs(calculateNetExpense({userExpenses: userExpenses,userID:userExpense.user_id, expense : expense}))}</span>
                     )
                   )}
                 </p>

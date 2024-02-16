@@ -1,12 +1,13 @@
 import React from 'react';
 import { useState } from 'react';
-import { useAuth } from '../AuthContext';
+import { getAuth } from 'firebase/auth';
 import { addDoc, collection, getDocs } from 'firebase/firestore';
+
+import { useAuth } from '../AuthContext';
 import db from '../../config/firebasedb';
 import { useNavigate } from 'react-router-dom';
 import GoogleButton from './GoogleButton';
 import LogoutIcon from '../icons/LogoutIcon';
-import { getAuth } from 'firebase/auth';
 import LoadingOverlay from '../loading/LoadingOverlay';
 
 const LoginButton = () => {
@@ -17,11 +18,7 @@ const LoginButton = () => {
   const registerWithGoogle = async () => {
     setLoading(true);
     const auth = getAuth();
-    let { displayName, email, photoURL: imageUrl } = auth.currentUser;
-
-    if (!imageUrl) {
-      imageUrl = 'https://via.placeholder.com/250';
-    }
+    let { displayName, email, photoURL: imageUrl = 'https://via.placeholder.com/250' } = auth.currentUser;
 
     try {
       const docRef = collection(db, 'user_detail');
@@ -62,6 +59,7 @@ const LoginButton = () => {
       console.error('Error signing in with Google:', error.message);
       setLoading(false);
     }
+    
   };
 
 
