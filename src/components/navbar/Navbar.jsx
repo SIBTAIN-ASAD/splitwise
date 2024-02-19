@@ -1,33 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-
-import { incrementByAmount } from '../../redux/reducers/counterReducer'; // Import action creators from the counterReducer
 import logo from '../../assets/images/logo.svg';
 import LoginButton from '../buttons/LoginButton';
-import { increment , decrement} from '../../redux/actions/counterActions';
+import { increment } from '../../redux/actions/counterActions'; // Import actions for counter
+import { incrementByAmount } from '../../redux/reducers/counterReducer';
+import { addTodo, deleteTodo } from '../../redux/reducers/todoReducer'; // Import actions for todos
 
 function Navbar() {
-
- // count from multi reducers store by slicing 
- const count = useSelector(state => state.counter.count); 
-
-	/***********************************************	
-	  Select count from the single reducer
-    const count = useSelector(state => state.count); 
-  ************************************************/
-
-
+  const todos = useSelector(state => state.todos); // Get todos from Redux store
+  const count = useSelector(state => state.counter.count); // Get count from Redux store
   const dispatch = useDispatch();
 
-  const handlePlusButton = () => {
-    // dispatch(increment());
-    dispatch(incrementByAmount(increment())); 
+  const [newTodo, setNewTodo] = useState('');
+  const [showTodoBar, setShowTodoBar] = useState(false); // State variable for toggling todo bar visibility
+
+  const handleAddTodo = () => {
+    dispatch(addTodo(newTodo)); // Dispatch addTodo action
+    setNewTodo(''); // Clear input after adding todo
+    dispatch(incrementByAmount(increment()))
   }
 
-  const handleMinusButton = () => { 
-    dispatch(incrementByAmount(decrement())); 
+  const handleDeleteTodo = (todoId) => {
+    dispatch(deleteTodo(todoId)); // Dispatch deleteTodo action
   }
+
+  const toggleTodoBar = () => {
+    setShowTodoBar(!showTodoBar); // Toggle todo bar visibility
+  }
+  
 
   return (
     <nav className="bg-gray-800 text-white p-4 px-12">
@@ -52,17 +53,40 @@ function Navbar() {
           </Link>
         </div>
 
+
         <LoginButton />
 
-        <div className="flex items-center space-x-4">
-          <button onClick={handleMinusButton} className="bg-gray-700 text-white px-3 py-1 rounded">
-            -
+
+        <div className="relative">
+          <button className="bg-gray-700 text-white px-3 py-1 rounded w-40" onClick={toggleTodoBar}>
+            {showTodoBar ? 'Hide Todos' : 'Show Todos'}
           </button>
-          <span className="text-xl">{count}</span>
-          <button onClick={handlePlusButton} className="bg-gray-700 text-white px-3 py-1 rounded">
-            +
-          </button>
+          {showTodoBar && (
+            <div className="absolute top-14 right-0 bg-gray-800 p-4 border border-gray-600 rounded shadow-md h-72 z-20 overflow-auto">
+              <div className="mb-4 flex">
+                <input type="text" value={newTodo} onChange={e => setNewTodo(e.target.value)} className="border border-gray-300 rounded px-2 py-1 mr-2 text-gray-800" />
+                <button onClick={handleAddTodo} className="bg-gray-700 text-white px-3 py-1 w-20 rounded hover:bg-gray-600">
+                  Add
+                </button>
+              </div>
+              
+              <p className="mb-2 text-gray-400">Currenly Added ({count}/{todos.todos.length})</p>
+
+              <ul>
+                {todos.todos.map(todo => (
+                  <li key={todo.id} className="flex items-center justify-between mb-2">
+                    <span className="text-white">
+                      <input type="checkbox" className="mr-2" />
+                      {todo.text}</span>
+                    <button onClick={() => handleDeleteTodo(todo.id)} className="text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 rounded-lg text-sm px-5 py-2">Delete</button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
+      
+
       </div>
     </nav>
   );
