@@ -29,7 +29,6 @@ const counterSlice = createSlice({
     initialState,
     reducers: {
         incrementByAmount: (state, action) => {
-            console.log("action =  ", action);
             if (action.payload.type === 'INCREMENT') {
                 state.count += action.payload.payload;
             }
