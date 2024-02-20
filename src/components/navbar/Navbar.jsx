@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import logo from '../../assets/images/logo.svg';
 import LoginButton from '../buttons/LoginButton';
-import { increment } from '../../redux/actions/counterActions'; // Import actions for counter
+import { increment, decrement } from '../../redux/actions/counterActions'; // Import actions for counter
 import { incrementByAmount } from '../../redux/reducers/counterReducer';
 import { addTodo, deleteTodo } from '../../redux/reducers/todoReducer'; // Import actions for todos
 
@@ -23,6 +23,10 @@ function Navbar() {
 
   const handleDeleteTodo = (todoId) => {
     dispatch(deleteTodo(todoId)); // Dispatch deleteTodo action
+
+    if (count > 0) {
+      dispatch(incrementByAmount(decrement()))
+    }
   }
 
   const toggleTodoBar = () => {
@@ -31,7 +35,7 @@ function Navbar() {
   
 
   return (
-    <nav className="bg-gray-800 text-white p-4 px-12">
+    <nav className="bg-gray-800 text-white p-4 ps-12 pe-0 me-0">
       <div className="container mx-auto flex justify-between items-center">
         <div className="text-xl font-bold">
           <Link to="/" className="text-white">
@@ -70,7 +74,7 @@ function Navbar() {
                 </button>
               </div>
               
-              <p className="mb-2 text-gray-400">Currenly Added ({count}/{todos.todos.length})</p>
+              <p className="mb-2 text-gray-400">Currenly Added ({count})</p>
 
               <ul>
                 {todos.todos.map(todo => (
